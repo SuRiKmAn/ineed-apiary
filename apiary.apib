@@ -1,0 +1,543 @@
+FORMAT: 1A
+HOST: https://www.supersoused.cz/api
+
+# iNeed
+
+
+# Promise
+    - Kazdy API request musi v hlavicke requestu obsahovat X-AUTH-TOKEN
+    - Kazdy API request musi ako jeden z parametrov pri POSTe obsahovat parameter app_sign
+O X-AUTH-TOKEN si Consumer poziada pri prvom requeste na server SuperSoused vid */auth*
+app_sign sluzi na podpis posielanych dat - na podpisanie sa pouziva dodana Libka a na vstupe je **AppSecret** a data vstupujuce do requestu
+    
+
+
+## Login - Part 1 [/security/login]
+
+### Redirect to SuperSoused [GET /security/login/{OneTimeToken}/{AppID}{?redirectUri}]
+Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Part 2** 
+
++ Parameters
+    + OneTimeToken (string, required) 
+        - Random minimalne 64chars string, ktory si musi vygenerovat consumer a ulozit ho docastne k uzivatelovi 
+        - odporucam max 5min, ale malo by stacit aj 30sec
+    + AppID (string, required)
+        ID ktore bude priradene consumerovy
+    + redirectUri (string, optional)
+        urlecoded URI to redirect after login
+        
+    
++ Response 301
+
+
+
+
+## Login - Part 2 [/whatever]
+
+### Request from SuperSoused with Token [POST]
+- Tato api musi byt na strane consumera API, takze akakolvek URL
+- odporucam tuto URL povolit potom len pre konkretnu IP zo servera SuperSoused
+
++ Attributes
+    + token (string, required) 
+         po decodovani tokenu pomocou dodanej libky ziska consumer OneTimeToken
+         - toto decodovanie prebieha na strane consumera API kde na vstupe do metody je token a **AppSecret** dodany spolu s **AppID**
+         - odporucam si tento OneTimeToken nasledne vymazat
+    
+
++ Response 200 (application/json)
+
+        {
+            "email": "consumer@domena.tld",
+            "location": "Praha",
+            "firstName": "Jmeno",
+            "lastName": "Prijmeni"
+        }
+        
+        
+
+## Security [/security]
+
+### Auth [POST /security/auth]
+    1) The client sends its credentials (app_id and sign) to the server.
+    2) The server authenticates them and generates a token with an expiration date.
+    3) The server stores the previously generated token.
+    4) The server sends the generated token to the client.
+    5) In every request, the client sends the token to the server.
+    6) The server, in each request, extracts the token from the incoming request, looks up the user identifier with the token to obtain the user information to do the authentication/authorization.
+    7) If the token is expired, the client have to repeat this step again.
+
++ Attributes
+    + app_id (string, required) pridelene SuperSousedom
+    + sign (string, required) hash vygenerovany pomocou dodanej Libky (**AppID** + **AppSecret**) - sluzi ako podpis
+    
+
++ Response 200 (application/json)
+    
+        {
+            "auth_token": "x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu",
+            "expire_at": "2016-06-12T15:30:56+0000"
+        }
+
+
+### Validate Email [POST /security/validate-email]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
+
++ Attributes
+    + email (string,required) 
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+
+    
++ Response 200 (application/json)
+
+        {
+            "status": "linked"
+        }
+        
++ Response 200 (application/json)
+
+        {
+            "status": "not-linked"
+        }
+    
++ Response 200 (application/json)
+
+        {
+            "status": "not-registered"
+        }
+        
+
+### Request For Link Account [POST /security/link-request]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
+
++ Attributes
+    + email (string,required)
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+    
++ Response 200 (application/json)
+
+        {
+            "status": "linked",
+            "token": "1jOi0UX69Onq3DCYhGMxga45EjSWJ4WAcyGbjt5h8ivYJYKOsnbzl4rNcaAJ4k04"
+        }
+        
++ Response 200 (application/json)
+
+        {
+            "status": "not-linked",
+            "pin": 12345
+        }
+    
++ Response 200 (application/json)
+
+        {
+            "status": "not-registered"
+        }
+        
+### Link Account [POST /security/link]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
+
++ Attributes
+    + email (string,required)
+    + pin (string,required)
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+    
+    
++ Response 200 (application/json)
+
+        {
+            "token": "JF3SWWXS3iGB7genrfKD92g92EISPFLo0D5VoRDgX0GUeK6vNFYKw4Gmxc5cGEoF"
+        }
+        
++ Response 422 (application/json)
+
+        {
+            "message": "Sprava preco sa to nepodarilo"
+        }
+
+### Get Login Token [POST /security/get-login-token]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
+
++ Attributes
+    + email (string,required)
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+    
+
++ Response 200 (application/json)
+
+        {
+            "token": "w3lO564Gxghovfw06SB35NKKrofTa2pwTy9Mr3iP9p4ssqpo7Qe1rMyG1Dp1uCkc"
+        }
+
++ Response 422 (application/json)
+
+        {
+            "message": "Sprava preco sa to nepodarilo"
+        }
+
+        
+### Register [POST /security/register]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
+
++ Attributes
+    + email (string, required)
+    + location (string, required)
+    + firstName (string, optional) 
+    + lastName (string, optional)
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+    
+    
++ Response 200 (application/json)
+
+        {
+            "token": "ymC4PT6dcMV87xezvz3lZi3UVEE921iqcKhRrcUrOEnK2pakO1vD9omSQOQHEYVG"
+        }
+        
++ Response 422 (application/json)
+
+        {
+            "message": "Sprava preco sa to nepodarilo"
+        }
+
+
+
+## Work [/entity/work{?limit}{?offset}{?order}]
+
+### List All Works [GET]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+ 
++ Parameters
+    + limit (int,optional) ... limit
+    + offset (int,optional)
+    + order (string,optional) ... order by scalar field in list
+    
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "currency": "CZK",
+                "title": "Oprava zabradli",
+                "expiration": "2016-07-15 11:16:14",
+                "author": "Franta M.",
+                "detail_url": "https://absolute_url_to_work_detail_on_web/1",
+                "proposes": {
+                    "count": 3,
+                    "best_price": 150
+                },
+                "category": {
+                    "identity": "handicraft",
+                    "name": "drobné stavební práce",
+                    "group_name": "Úpravy a přestavby v domácnosti"
+                }
+            },
+            {
+                "id": 2,
+                "currency": "CZK",
+                "title": "Vymena oken",
+                "expiration": "2016-07-16 11:16:14",
+                "author": "Franta M.",
+                "detail_url": "https://absolute_url_to_work_detail_on_web/2",
+                "proposes": {
+                    "count": 2,
+                    "best_price": 650
+                },
+                "category": {
+                    "identity": "handicraft",
+                    "name": "drobné stavební práce",
+                    "group_name": "Úpravy a přestavby v domácnosti"
+                }
+            }
+        ]
+        
+### Create Work [POST /entity/work]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+            
++ Attributes
+    + token (string, required)
+    + sign (string, required)
+    + work (string, required) ... json worku - nizsie popisany
+
++ Request (application/json)
+
+        {
+            "title": "Just title...",
+            "skill_id": 1,
+            "address_id": 12,
+            "expire_days": 14,
+            "description": "Info...",
+            "price": "500 - 600 kc",
+            "realization_date_from": "null/date",
+            "realization_date_to": "null/date",
+            "realization_asap" : false
+        }
+    
++ Response 200 (application/json)
+
+        {
+            "status": true,
+            "work_id": 2,
+            "message": "succes message..."
+        }
+
++ Response 422 (application/json)
+
+        {
+            "status": false,
+            "work_id": null,
+            "message": "fail message..."
+        }
+        
+        
+### Work Detial [GET /entity/work/{work_id}]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + work_id (int) ... Id of work
+
++ Response 200 (application/json)
+
+        {
+            "id": 2,
+            "currency": "CZK",
+            "title": "Vymena oken",
+            "expiration": "2016-07-16 11:16:14",
+            "author": "Franta M.",
+            "detail_url": "https://absolute_url_to_work_detail_on_web/2",
+            "propose_count": 2,
+            "propose_best_price": 650,
+            "skill": {
+                "id": 1,
+                "name": "drobné stavební práce",
+                "identity": "handicraft",
+                "group_name": "Úpravy a přestavby v domácnosti"
+            },
+            "is_available": true, 
+            "price": "500 - 600 kc",
+            "realization_date_from": "null/date",
+            "realization_date_to": "null/date",
+            "realization_asap" : false
+        }
+    
+### Proposes for work [GET /entity/work/{work_id}/propose]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + work_id (int) ... Id of work
+
++ Response 200 (application/json)
+
+        [
+            {
+                "work_id": 2,
+                "id": 20,
+                "author": "Kuba C.",
+                "price": 650
+            },
+            {
+                "work_id": 2,
+                "id": 21,
+                "author": "Ondro V.",
+                "price": 720
+            }
+        ]
+    
+    
+
+## Skills [/entity/skill-group]
+
+### List of Skill Groups [GET]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "name": "Opravy v domácnosti a montáž",
+                "identity_name": "montage"
+            },
+            {
+                "id": 2,
+                "name": "Úpravy a přestavby v domácnosti",
+                "identity_name": "handicraft"
+            },
+            {
+                "id": 3,
+                "name": "Technická pomoc s PC a spotřebiči",
+                "identity_name": "technology"
+            }
+        ]
+    
+### Detail of Skill Group [GET /entity/skill-group/{group_id}]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + group_id (int, required) ... id of skill group
+    
++ Response 200 (application/json)
+
+        {
+            "id": 1,
+            "name": "Opravy v domácnosti a montáž",
+            "identity_name": "montage"
+        }
+
+### List of Skills in Group [GET /entity/skill-group/{group_id}/skill]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + group_id (int, required) ... id of skill group
+    
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "name": "drobné stavební práce",
+                "identity": "handicraft",
+                "group_name": "Úpravy a přestavby v domácnosti"
+            },
+            {
+                "id": 2,
+                "name": "vrtání",
+                "identity": "handicraft",
+                "group_name": "Úpravy a přestavby v domácnosti"
+            }
+        ]
+
+### Detail of Skill in Group [GET /entity/skill-group/{group_id}/skill/{skill_id}]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + group_id (int, required) ... id of skill group
+    + skill_id (int, required) ... id of skill
+    
++ Response 200 (application/json)
+
+        {
+            "id": 1,
+            "name": "drobné stavební práce",
+            "identity": "handicraft",
+            "group_name": "Úpravy a přestavby v domácnosti"
+        }
+        
+        
+        
+## GeoLocation [/entity/geo_location]
+
+### List [GET]
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "name": "Praha"
+            },
+            {
+                "id": 2,
+                "name": "Brno"
+            }
+        ]
+        
+## Location [/entity/location]
+
+### List [GET /entity/location{/level}]
+V pripade ze je API volana bez parametru level, vrati uplne vsetky dostupne likality od levelu 3
+    - level 3 su 2 lokality - Oblast okolo Prahy a Oblast okolo Brna
+    
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Parameters
+    + level (int,optional) ... level of locations
+    
+    
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "level": 4,
+                "geo_location": 2,
+                "name": "Brno"
+            },
+            {
+                "id": 2,
+                "level": 5,
+                "geo_location": 2,
+                "name": "Brno - střed"
+            },
+            {
+                "id": 3,
+                "level": 6,
+                "geo_location": 2,
+                "name": "Brno - město"
+            },
+        ]
