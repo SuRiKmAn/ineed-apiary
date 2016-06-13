@@ -114,6 +114,10 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
 
 ### Request For Link Account [POST /security/link-request]
 
+    - ak metoda #LinkAccount vrati "not-linked" - automaticky sa odosle email s PINom aby zakaznik mohol pokracovat.
+    - ak metoda vrati "not-registered" - je nutne zavolat metodu #Register
+    - ak vrati "linked" tak s tymto tokenom je mozne vy
+
 + Request
     + Headers
     
@@ -134,8 +138,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
 + Response 200 (application/json)
 
         {
-            "status": "not-linked",
-            "pin": 12345
+            "status": "not-linked"
         }
     
 + Response 200 (application/json)
@@ -143,6 +146,36 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
         {
             "status": "not-registered"
         }
+        
+### Check Pin [POST /security/check-pin]
+
+    Metodu CheckPin nie je nutne volat, je mozne volat priamo #LinkAccount, pretoze tato metoda vracia v principe len true/false - zalezi od implementacii
+
++ Request
+    + Headers
+    
+            X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
+
++ Attributes
+    + email (string,required)
+    + pin (string,required)
+    + sign (string, required) podpis sluziaci na overenie - popis uplne hore
+
+
++ Response 200 (application/json)
+
+        {
+            "status": true,
+            "message": "success"
+        }
+    
++ Response 422 (application/json)
+
+        {
+            "status": false,
+            "message": "Nespravny pin"
+        }
+    
         
 ### Link Account [POST /security/link]
 
@@ -288,7 +321,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
             X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
             
 + Attributes
-    + token (string, required)
+    + token (string, required) ... token ziskany pomocou #RequestForLinkAccount, #LinkAccount, #GetLoginTOken alebo #Register
     + sign (string, required)
     + work (string, required) ... json worku - nizsie popisany
 
