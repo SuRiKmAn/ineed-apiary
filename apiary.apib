@@ -1,14 +1,14 @@
 FORMAT: 1A
-HOST: https://www.supersoused.cz/api
+HOST: https://www.supersoused.cz/api/
 
 # iNeed
 
 
 # Promise
     - Kazdy API request musi v hlavicke requestu obsahovat X-AUTH-TOKEN
-    - Kazdy API request musi ako jeden z parametrov pri POSTe obsahovat parameter app_sign
+    - Kazdy API request musi ako jeden z parametrov pri POSTe obsahovat parameter **sign**
 O X-AUTH-TOKEN si Consumer poziada pri prvom requeste na server SuperSoused vid */auth*
-app_sign sluzi na podpis posielanych dat - na podpisanie sa pouziva dodana Libka a na vstupe je **AppSecret** a data vstupujuce do requestu
+**sign** sluzi na podpis posielanych dat - na podpisanie sa pouziva dodana Libka a na vstupe je **AppSecret** a data vstupujuce do requestu
     
 
 
@@ -76,7 +76,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
     
         {
             "auth_token": "x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu",
-            "expire_at": "2016-06-12T15:30:56+0000"
+            "expire_at": "2016-08-12T15:30:56+0000"
         }
 
 
@@ -86,7 +86,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
     + Headers
     
             X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
-
+    
 
 + Attributes
     + email (string,required) 
@@ -114,9 +114,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
 
 ### Request For Link Account [POST /security/link-request]
 
-    - ak metoda #LinkAccount vrati "not-linked" - automaticky sa odosle email s PINom aby zakaznik mohol pokracovat.
-    - ak metoda vrati "not-registered" - je nutne zavolat metodu #Register
-    - ak vrati "linked" tak s tymto tokenom je mozne robit user operacie, kde je nutny "token"
+    - Tuto metodu treba volat az potom, co  #ValidateEmail vrati "not-linked" - len v tomto pripade sa po zavolani tejto metody odosle email s PINom aby zakaznik mohol pokracovat.
 
 + Request
     + Headers
@@ -131,21 +129,17 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
 + Response 200 (application/json)
 
         {
-            "status": "linked",
-            "token": "1jOi0UX69Onq3DCYhGMxga45EjSWJ4WAcyGbjt5h8ivYJYKOsnbzl4rNcaAJ4k04"
+            "status": true,
+            "message": "Info o uspesnom odoslani emailu kde je PIN a co treba spravit - proste description pre zakaznika"
         }
         
-+ Response 200 (application/json)
++ Response 422 (application/json)
 
         {
-            "status": "not-linked"
+            "status": false,
+            "message": "preco sa to nepodarilo - toto je skor na ucel logovania - nemalo by sa zobrazovat zakaznikovy"
         }
     
-+ Response 200 (application/json)
-
-        {
-            "status": "not-registered"
-        }
         
 ### Check Pin [POST /security/check-pin]
 
@@ -166,7 +160,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
 
         {
             "status": true,
-            "message": "success"
+            "message": "Spravny pin"
         }
     
 + Response 422 (application/json)
