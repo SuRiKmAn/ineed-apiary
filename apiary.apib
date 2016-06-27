@@ -533,7 +533,7 @@ Po redirectovani na tuto URL, prebehne request zo SuperSouseda vcasti **Login Pa
         
 ## Location [/entity/location]
 
-### List [GET /entity/location{/level}]
+### List [GET /entity/location{/geoLocationId}{?level}]
 V pripade ze je API volana bez parametru level, vrati uplne vsetky dostupne likality od levelu 3
     - level 3 su 2 lokality - Oblast okolo Prahy a Oblast okolo Brna
     
@@ -543,6 +543,7 @@ V pripade ze je API volana bez parametru level, vrati uplne vsetky dostupne lika
             X-AUTH-TOKEN: x2jul77pesyAzXEXKUI4h7EFMtsa2HZoy9IH3FX7Vjwi516FIDwQz1jaiz907Xlu
 
 + Parameters
+    + geoLocationId (int,optional) ... filter of locations under geolocation
     + level (int,optional) ... level of locations
     
     
